@@ -24,7 +24,7 @@ public class ConnectionProcessor implements Runnable
 		try
 		{
 			readInputHeader();
-			writeResponse("<html><body><h1>Hello from Habrahabr</h1></body></html>");
+			writeResponse("<html><body><h1>Hello there!!!</h1></body></html>");
 		} catch (Throwable t)
 		{}
 		finally
