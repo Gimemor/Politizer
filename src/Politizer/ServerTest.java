@@ -23,7 +23,7 @@ public class ServerTest
  	}
 	
 	/*
-	 * Конструтор
+	 * Конструктор
 	 */
 	public ServerTest()
 	{
