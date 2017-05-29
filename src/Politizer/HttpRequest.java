@@ -4,8 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
-import java.util.Map;
-
+ 
 /*
  * Класс представляет собой сущность HTTP-запроса
  *  
@@ -51,6 +50,11 @@ public class HttpRequest {
 		_requestLine = s;
 	}
 	
+	public String getRequestLine()
+	{
+		return _requestLine;		
+	}
+	
 	public void addHeaderParameter(String s) 
 	{
 		String[] param = s.split(":", 2);
@@ -70,13 +74,12 @@ public class HttpRequest {
 	
 	public String getMessage()
 	{
-		String result = _requestLine;
-		return result;
+		String result = _body;
+ 		return result;
 	}
 
 	public void setMessage(String s) {
 		_body = s;
-		
 	}
 	
 }

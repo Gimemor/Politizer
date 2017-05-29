@@ -2,8 +2,6 @@ package Politizer;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.*;
  /*
   * Класс реализует точку входа на сервер 

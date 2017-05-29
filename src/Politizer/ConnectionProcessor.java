@@ -43,7 +43,7 @@ public class ConnectionProcessor implements Runnable
 			System.out.println(request.getMessage());
 			// Здесь нужно решить что делать с сообщением, для этого нужно запустить 
 			// парсер
- 			writeResponse("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"> <html lang=\"en\"> <head> <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"> <title>Title Goes Here</title> </head> <body> <p>This is my web page</p> </body> </html>");
+ 			writeResponse("ok");
 		} catch (Throwable t)
 		{
 			_logger.log(Level.SEVERE, "Connection processing failed: " + t.getMessage(), t);
@@ -52,7 +52,9 @@ public class ConnectionProcessor implements Runnable
 		{
 			try
 			{
-				this._clientSocket.close();
+				_inputStream.close();
+				_outputStream.close();
+				_clientSocket.close();
 			} catch(Throwable t)
 			{
 				_logger.log(
@@ -79,9 +81,9 @@ public class ConnectionProcessor implements Runnable
 						"Connection: close\r\n\r\n";
 		try
 		{
-			this._outputStream.write((result + response).getBytes());
-			this._outputStream.write("\r\n".getBytes());
-			this._outputStream.flush();
+			_outputStream.write((result + response).getBytes());
+			_outputStream.write("\r\n".getBytes());
+			_outputStream.flush();
 		} catch(Throwable t)
 		{}
 		_logger.info("Response was sended");
