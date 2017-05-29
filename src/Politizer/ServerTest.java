@@ -2,7 +2,9 @@ package Politizer;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.*;
  /*
   *  ласс реализует точку входа на сервер 
   */
@@ -11,15 +13,18 @@ public class ServerTest
 	private ServerSocket serverSocket;
 	private ArrayList<ConnectionProcessor> connectionList;
 	private boolean bRunning  = true;
-	private final int portNumber = 85;
+	private final int portNumber = 80;
+ 	//Ћоггер
+	private static Logger _logger = Logger.getLogger(ServerTest.class.getName());
+	
 	/*
 	 * ¬ход а приложение
 	 */
 	public static void main(String[] args) throws Throwable
 	{
 		ServerTest p = new ServerTest();
-		p.exec();
-		p.close();
+		p.Exec();
+		p.Close();
  	}
 	
 	/*
@@ -28,20 +33,33 @@ public class ServerTest
 	public ServerTest()
 	{
 		connectionList = new ArrayList<ConnectionProcessor>();
+		_logger.info("Server Initialization...");;
 		try
 		{
 			serverSocket = new ServerSocket(portNumber);
 		} catch(IOException e)
 		{
-			System.out.println(e.getMessage());
+  			e.printStackTrace();
+ 			_logger.log(
+ 					Level.SEVERE, 
+ 					"Unable to retrieve server socket: " + e.getMessage(),
+ 					e
+ 			);
 		}
 	}
 
-	public void close() {
+	public void Close()
+	{
+		_logger.info("Server shutdown");
 		try {
 			serverSocket.close();
 		} catch (IOException e) {
  			e.printStackTrace();
+ 			_logger.log(
+ 					Level.SEVERE, 
+ 					"Unable to close server socket: " + e.getMessage(),
+ 					e
+ 			);
 		}
 		for(int i = 0; i < connectionList.size(); i++)
 		{
@@ -49,25 +67,42 @@ public class ServerTest
 		}
 	}
 
-	public void exec() throws Throwable
+	public void Exec() throws Throwable
 	{
   		Socket s = null;
   		while(bRunning)
   		{
-			try {
+ 			try {
 				s = serverSocket.accept();
 			} catch (IOException e) {
 	 			e.printStackTrace();
+	 			_logger.log(
+	 					Level.SEVERE, 
+	 					"Unable to retrieve socket: " + e.getMessage(),
+	 					e
+	 			);
 			}
-			ConnectionProcessor connection = new ConnectionProcessor(s);
+			_logger.info("Connection accepted");
+ 			ConnectionProcessor connection = new ConnectionProcessor(s);
 			connectionList.add(connection);
-			new Thread(connection).start();
-  		}
+			try
+			{
+ 				new Thread(connection).run();
+ 			}
+			catch(Exception e)
+			{
+				_logger.log(
+	 					Level.SEVERE, 
+	 					"Process execution error: " + e.getMessage(),
+	 					e
+	 			);				
+			}
+   		}
 	}
 	
 	public void Finalize()
 	{
-		this.close();		
+		this.Close();		
 	}
 }
 

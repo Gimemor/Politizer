@@ -5,17 +5,32 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.logging.*;
 
+
+// По http приходит колбэк по новому событию
+// Лексичиский анализатор и реализация модели решают как отреагировать на сообщение
+// Через конекшн процессор и реализацию вк апи отсылается ответ что делать
+
+// Когда приходит вызов колбэка нужно например прокоменнтить
+
+/*
+ * Класс отвечает за взаимодействие с соединениями 
+ */
 public class ConnectionProcessor implements Runnable
 {
-	Socket clientSocket;
-	InputStream inputStream;
-	OutputStream outputStream;
+	private Socket _clientSocket;
+	private InputStream _inputStream;
+	private OutputStream _outputStream;
+	//Логгер
+	private static Logger _logger = Logger.getLogger(ConnectionProcessor.class.getName());
+	private boolean _active = true;
+	
 	public ConnectionProcessor(Socket s) throws Throwable
 	{
-		clientSocket = s;
-		this.inputStream = s.getInputStream();
-		this.outputStream = s.getOutputStream();
+		this._clientSocket = s;
+		this._inputStream = s.getInputStream();
+		this._outputStream = s.getOutputStream();
 	}
 	
 	@Override
@@ -23,19 +38,38 @@ public class ConnectionProcessor implements Runnable
 	{
 		try
 		{
-			readInputHeader();
-			writeResponse("<html><body><h1>Hello there!!!</h1></body></html>");
+			_active = true;
+ 			HttpRequest request = readInput();
+			System.out.println(request.getMessage());
+			// Здесь нужно решить что делать с сообщением, для этого нужно запустить 
+			// парсер
+ 			writeResponse("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"> <html lang=\"en\"> <head> <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"> <title>Title Goes Here</title> </head> <body> <p>This is my web page</p> </body> </html>");
 		} catch (Throwable t)
-		{}
+		{
+			_logger.log(Level.SEVERE, "Connection processing failed: " + t.getMessage(), t);
+		}
 		finally
 		{
 			try
 			{
-				clientSocket.close();
+				this._clientSocket.close();
 			} catch(Throwable t)
-			{}
+			{
+				_logger.log(
+						Level.SEVERE, 
+						"Client socket close failed: " + t.getMessage(),
+						t
+				);				
+			}
+			_active = false;
 		}
 	}
+	
+	public boolean IsActive()
+	{ return this._active; }
+	public Socket GetSocket()
+	{ return this._clientSocket; }
+	
 	public void writeResponse(String response)
 	{
 		String result = "HTTP/1.1 200 OK\r\n" +
@@ -45,31 +79,48 @@ public class ConnectionProcessor implements Runnable
 						"Connection: close\r\n\r\n";
 		try
 		{
-			this.outputStream.write((result + response).getBytes());
-			this.outputStream.flush();
+			this._outputStream.write((result + response).getBytes());
+			this._outputStream.write("\r\n".getBytes());
+			this._outputStream.flush();
 		} catch(Throwable t)
 		{}
+		_logger.info("Response was sended");
 	}
 	
-	public void readInputHeader() throws Throwable
+	public HttpRequest readInput() throws Throwable
 	{
-		BufferedReader br = new BufferedReader(new InputStreamReader(this.inputStream));
-		while(true)
+		String s = "";
+		HttpRequest httpRequest = new HttpRequest();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(_inputStream));
+		// Читаем request line
+		s = reader.readLine();
+		httpRequest.setRequestLine(s);
+		// Читаем параметры
+		while((s = reader.readLine().trim()).length() > 0)
 		{
-			String s = br.readLine();
-            if(s == null || s.trim().length() == 0) 
-            {
-                break;
-            }
+			httpRequest.addHeaderParameter(s);
 		}
+ 		try
+		{
+ 			int contentLength = Integer.parseInt(
+ 					httpRequest.getParameter("Content-Length")
+ 			);
+ 			char []cbuf = new char[contentLength + 1];
+ 			reader.read(cbuf, 0, contentLength);
+ 			s = String.copyValueOf(cbuf);
+  			httpRequest.setMessage(s);
+		} catch (Exception e) {
+			_logger.info("Request parsing has been failed: " + e.getMessage());
+		}
+  		return httpRequest;
 	}
 
 	public void close() {
-		try{
-			this.inputStream.close();
-			this.outputStream.close();
-			this.clientSocket.close();
-		} catch(Exception e) {
+			try{
+				this._inputStream.close();
+				this._outputStream.close();
+				this._clientSocket.close();
+			} catch(Exception e) {
 			
 		}
 	}
