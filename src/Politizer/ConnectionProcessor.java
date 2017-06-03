@@ -40,10 +40,8 @@ public class ConnectionProcessor implements Runnable
 		{
 			_active = true;
  			HttpRequest request = readInput();
-			System.out.println(request.getMessage());
-			// «десь нужно решить что делать с сообщением, дл€ этого нужно запустить 
-			// парсер
- 			writeResponse("ok");
+ 			// —ообщим, что уведомление получено нормально
+  			HttpRequestParser.Process(this, request);	 
 		} catch (Throwable t)
 		{
 			_logger.log(Level.SEVERE, "Connection processing failed: " + t.getMessage(), t);
@@ -89,6 +87,20 @@ public class ConnectionProcessor implements Runnable
 		_logger.info("Response was sended");
 	}
 	
+	public void sendHttpRequest(String request)
+	{
+		 
+		try
+		{
+			_outputStream.write(request.getBytes());
+			_outputStream.write("\r\n".getBytes());
+			_outputStream.flush();
+		} catch(Throwable t)
+		{}
+		_logger.info("HTTP Request was sended");
+	}
+	
+	
 	public HttpRequest readInput() throws Throwable
 	{
 		String s = "";
@@ -100,17 +112,19 @@ public class ConnectionProcessor implements Runnable
 		// „итаем параметры
 		while((s = reader.readLine().trim()).length() > 0)
 		{
-			httpRequest.addHeaderParameter(s);
+ 			httpRequest.addHeaderParameter(s);
 		}
  		try
 		{
- 			int contentLength = Integer.parseInt(
- 					httpRequest.getParameter("Content-Length")
- 			);
- 			char []cbuf = new char[contentLength + 1];
- 			reader.read(cbuf, 0, contentLength);
- 			s = String.copyValueOf(cbuf);
-  			httpRequest.setMessage(s);
+ 			int contentLength = httpRequest.getContentLength();
+ 			if(contentLength > 0)
+ 			{
+ 				char []cbuf = new char[contentLength + 1];
+ 	 			reader.read(cbuf, 0, contentLength);
+ 	 			s = String.copyValueOf(cbuf);
+ 	  			httpRequest.setMessage(s);			
+ 			}
+ 			
 		} catch (Exception e) {
 			_logger.info("Request parsing has been failed: " + e.getMessage());
 		}

@@ -4,10 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.Map.Entry;
  
 /*
  * Класс представляет собой сущность HTTP-запроса
- *  
  */
 public class HttpRequest {
 	private String _requestLine;
@@ -45,6 +45,18 @@ public class HttpRequest {
 		
 	}
 
+	public String getFullRequest()
+	{
+		String result = getRequestLine() + "\r\n";
+		for(Entry<String, String> e : _headerParams.entrySet()) {
+		        String key = e.getKey();
+		        String value = e.getValue();
+		        result += key + ": " + value + "\r\n";
+		  }
+		result += "\r\n" + getMessage() + " \r\n\r\n";
+		return result;
+		
+	}
 	public void setRequestLine(String s)
 	{
 		_requestLine = s;
@@ -65,6 +77,14 @@ public class HttpRequest {
 		{
 			System.out.println(s);
 		}
+	}
+	
+	public int getContentLength()
+	{
+		int length = 0;
+		if(_headerParams.containsKey("Content-Length"))
+			length = Integer.parseInt(getParameter("Content-Length"));
+		return length;
 	}
 	
 	public String getParameter(String s)
