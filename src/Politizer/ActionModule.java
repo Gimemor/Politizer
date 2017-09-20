@@ -7,8 +7,7 @@ import org.json.simple.JSONObject;
 // Module is performing actions over social network's entities
 //
 public class ActionModule {
-	//private String accessKey = "9be764204d2f5ff03340b153d33ddb6466ffdf2a9e1224566169e49152c2da97fedd603c02bed571c480c";
-	
+ 	
 	private static String MakeHttpRequest(String method, String resource, String body)
 	{
 		String result =  method + " " + resource + " HTTP/1.1\r\n" + 
